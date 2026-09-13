@@ -1,1 +1,105 @@
+<!DOCTYPE html>
+<html lang="te">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Venkat Textiles - Online Shop</title>
+    <script src="https://tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
 
+    <header class="bg-indigo-700 text-white p-4 shadow-md sticky top-0 z-50">
+        <div class="container mx-auto flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold">VENKAT TEXTILES</h1>
+                <p class="text-xs text-indigo-200">GSTIN: 37ADGPY4978G1ZR</p>
+            </div>
+            <span class="bg-indigo-800 px-3 py-1 rounded text-sm">Wholesale Store</span>
+        </div>
+    </header>
+
+    <main class="container mx-auto p-6">
+        <h2 class="text-xl font-bold text-gray-800 mb-6 border-b pb-2">మా లైవ్ కలెక్షన్స్</h2>
+        <div id="products-grid" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <p class="col-span-full text-center py-10">ప్రొడక్ట్స్ లోడ్ అవుతున్నాయి...</p>
+        </div>
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBPOp8NtMBP09rNtCGe5-wRre6Y_Zt5g0M",
+            authDomain: "venkat-textiles.firebaseapp.com",
+            projectId: "venkat-textiles",
+            storageBucket: "venkat-textiles.firebasestorage.app",
+            messagingSenderId: "636994469508",
+            appId: "1:636994469508:web:3635e16ec5a6c117ca5b05"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        async function loadProducts() {
+            const grid = document.getElementById('products-grid');
+            try {
+                const q = query(collection(db, "products"), orderBy("timestamp", "desc"));
+                const querySnapshot = await getDocs(q);
+                grid.innerHTML = '';
+
+                if (querySnapshot.empty) {
+                    grid.innerHTML = `<p class="text-gray-500 col-span-full text-center py-10">ప్రస్తుతం ఎటువంటి ప్రొడక్ట్స్ అందుబాటులో లేవు.</p>`;
+                    return;
+                }
+
+                querySnapshot.forEach((docItem) => {
+                    const p = docItem.data();
+                    const docId = docItem.id;
+
+                    grid.innerHTML += `
+                        <div class="bg-white rounded-lg shadow overflow-hidden flex flex-col justify-between">
+                            <img class="h-48 w-full object-cover" src="${p.image}" alt="${p.name}">
+                            <div class="p-3">
+                                <h3 class="font-bold text-gray-900 text-sm md:text-base">${p.name}</h3>
+                                <p class="text-gray-500 text-xs my-1">${p.description || ''}</p>
+                                <div class="flex justify-between items-center mt-3">
+                                    <span class="text-lg font-bold text-green-600">₹${p.price}</span>
+                                    <button onclick="sendOrder('${p.name.replace(/'/g, "\\'")}', '${p.price}')" class="bg-green-500 text-white text-xs px-2 py-1.5 rounded font-bold hover:bg-green-600">
+                                        WhatsApp ఆర్డర్
+                                    </button>
+                                </div>
+                                <button onclick="deleteProduct('${docId}')" class="w-full mt-2 bg-red-500 text-white text-xs py-1 rounded font-bold hover:bg-red-600">
+                                    🗑️ ఈ ప్రొడక్ట్ తొలగించు (Delete)
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+            } catch (e) {
+                grid.innerHTML = `<p class="text-red-500 col-span-full text-center">డేటా లోడ్ అవ్వలేదు: ${e.message}</p>`;
+            }
+        }
+
+        window.sendOrder = function(name, price) {
+            const myNumber = "919441447923";
+            const text = `హలో Venkat Textiles, నేను మీ సైట్‌లో ఈ ప్రొడక్ట్ చూశాను:\n\nSaree: *${name}*\nPrice: *₹${price}*\n\nఆర్డర్ కన్ఫర్మ్ చేయగలరు.`;
+            window.open(`https://wa.me/${myNumber}?text=${encodeURIComponent(text)}`, '_blank');
+        }
+
+        window.deleteProduct = async function(id) {
+            if (confirm("మీరు నిజంగా ఈ ప్రొడక్ట్‌ని తొలగించాలనుకుంటున్నారా?")) {
+                try {
+                    await deleteDoc(doc(db, "products", id));
+                    alert("ప్రొడక్ట్ విజయవంతంగా తొలగించబడింది!");
+                    loadProducts();
+                } catch (error) {
+                    alert("తొలగించడంలో ఎర్రర్ వచ్చింది: " + error.message);
+                }
+            }
+        }
+
+        loadProducts();
+    </script>
+</body>
+</html>
