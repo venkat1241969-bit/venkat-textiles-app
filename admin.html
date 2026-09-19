@@ -24,7 +24,6 @@
         window.addProduct = async function(event) {
             event.preventDefault();
             const name = document.getElementById('prodName').value;
-            const catalog = document.getElementById('prodCatalog').value.trim() || "General";
             const price = document.getElementById('prodPrice').value;
             const discount = document.getElementById('prodDiscount').value;
             const stock = document.getElementById('prodStock').value;
@@ -47,7 +46,6 @@
                 try {
                     await addDoc(collection(db, "items"), {
                         name,
-                        catalog,
                         price: Number(price),
                         discount: Number(discount) || 30,
                         stock: Number(stock) || 1,
@@ -84,14 +82,12 @@
                     const p = docSnap.data();
                     const id = docSnap.id;
                     const stockVal = Number(p.stock) || 0;
-                    const catalogName = p.catalog || 'General';
                     content += `
                         <div class="bg-white p-2.5 rounded-xl border border-gray-200 flex flex-col gap-2 shadow-sm">
                             <div class="flex items-center justify-between gap-2">
                                 <img src="${p.image}" class="w-12 h-12 object-cover rounded-lg">
                                 <div class="flex-grow">
                                     <h4 class="font-bold text-xs text-gray-900 truncate max-w-[130px]">${p.name}</h4>
-                                    <p class="text-[9px] text-gray-500">📁 కేటలాగ్: <span class="font-semibold text-gray-700">${catalogName}</span></p>
                                     <p class="text-[10px] text-rose-600 font-black">₹${p.price} | Stock: ${stockVal}</p>
                                 </div>
                                 <button onclick="deleteProduct('${id}')" class="bg-red-50 text-red-600 border border-red-200 px-2 py-1 rounded-lg text-[10px] font-bold">డిలీట్</button>
@@ -252,22 +248,18 @@
                     <label class="text-[10px] font-semibold text-gray-600 block">ప్రొడక్ట్ పేరు:</label>
                     <input type="text" id="prodName" required placeholder="ఉదా: పట్టు చీర" class="w-full border px-2.5 py-1.5 text-xs rounded-lg outline-none bg-gray-50">
                 </div>
-                <div>
-                    <label class="text-[10px] font-semibold text-gray-600 block">కేటలాగ్ / కలెక్షన్ పేరు (Catalog Name):</label>
-                    <input type="text" id="prodCatalog" placeholder="ఉదా: Sarees / Kurtis" class="w-full border px-2.5 py-1.5 text-xs rounded-lg outline-none bg-gray-50">
-                </div>
                 <div class="grid grid-cols-3 gap-2">
                     <div>
                         <label class="text-[10px] font-semibold text-gray-600 block">ధర (₹):</label>
-                        <input type="number" id="prodPrice" required placeholder="450" class="w-full border px-2.5 py-1.5 text-xs rounded-lg outline-none bg-gray-50">
+                        <input type="number" id="prodPrice" required placeholder="450" class="w-full border px-2 py-1.5 text-xs rounded-lg outline-none bg-gray-50">
                     </div>
                     <div>
                         <label class="text-[10px] font-semibold text-gray-600 block">డిస్కౌంట్ (%):</label>
-                        <input type="number" id="prodDiscount" value="30" class="w-full border px-2.5 py-1.5 text-xs rounded-lg outline-none bg-gray-50">
+                        <input type="number" id="prodDiscount" value="30" class="w-full border px-2 py-1.5 text-xs rounded-lg outline-none bg-gray-50">
                     </div>
                     <div>
                         <label class="text-[10px] font-semibold text-gray-600 block">స్టాక్ (Qty):</label>
-                        <input type="number" id="prodStock" required placeholder="10" class="w-full border px-2.5 py-1.5 text-xs rounded-lg outline-none bg-gray-50">
+                        <input type="number" id="prodStock" required placeholder="10" class="w-full border px-2 py-1.5 text-xs rounded-lg outline-none bg-gray-50">
                     </div>
                 </div>
                 <div>
