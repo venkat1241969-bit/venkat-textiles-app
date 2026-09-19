@@ -3,103 +3,166 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Venkat Textiles - Online Shop</title>
-    <script src="https://tailwindcss.com"></script>
+    <title>Venkat Textiles - Online Store</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module" src="script.js"></script>
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-100 pb-24">
 
-    <header class="bg-indigo-700 text-white p-4 shadow-md sticky top-0 z-50">
-        <div class="container mx-auto flex justify-between items-center">
-            <div>
-                <h1 class="text-2xl font-bold">VENKAT TEXTILES</h1>
-                <p class="text-xs text-indigo-200">GSTIN: 37ADGPY4978G1ZR</p>
+    <!-- Top App Header -->
+    <header class="bg-rose-600 text-white p-3 sticky top-0 z-40 shadow-md flex justify-between items-center">
+        <div>
+            <h1 class="text-sm font-black tracking-wide">VENKAT TEXTILES</h1>
+            <p class="text-[9px] text-rose-100">GSTN: 37ADGPY4978G1ZR</p>
+            <p class="text-[9px] text-rose-100 mt-0.5">Macherla, Palnadu, Andhra Pradesh - 522426</p>
+        </div>
+        <div class="flex items-center gap-2">
+            <button onclick="openMyOrdersModal()" class="bg-rose-700 hover:bg-rose-800 text-white text-[10px] font-bold px-2.5 py-1.5 rounded-xl shadow flex items-center gap-1">
+                📦 My Orders
+            </button>
+            <div class="bg-white p-1 rounded-full shadow-md flex items-center justify-center w-8 h-8 border border-rose-200">
+                <span class="text-rose-700 font-bold text-xs">🛕</span>
             </div>
-            <span class="bg-indigo-800 px-3 py-1 rounded text-sm">Wholesale Store</span>
+            <button onclick="toggleCart()" class="relative bg-rose-700 p-2 rounded-xl text-white flex items-center gap-1 shadow">
+                🛒 <span id="cart-count" class="text-xs font-black">0</span>
+            </button>
         </div>
     </header>
 
-    <main class="container mx-auto p-6">
-        <h2 class="text-xl font-bold text-gray-800 mb-6 border-b pb-2">మా లైవ్ కలెక్షన్స్</h2>
-        <div id="products-grid" class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <p class="col-span-full text-center py-10">ప్రొడక్ట్స్ లోడ్ అవుతున్నాయి...</p>
+    <!-- Main Section -->
+    <main class="container mx-auto p-3">
+        <h2 class="text-xs font-bold text-gray-700 mb-2.5 uppercase tracking-wider">మా లేటెస్ట్ కలెక్షన్స్</h2>
+        <div id="products-grid" class="grid grid-cols-2 gap-2.5">
+            <p class="col-span-full text-center py-10 text-xs text-gray-500 animate-pulse">ప్రొడక్ట్స్ లోడ్ అవుతున్నాయి...</p>
         </div>
     </main>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    <!-- Footer with T&C -->
+    <footer class="bg-white border-t border-gray-200 py-3 px-4 text-center fixed bottom-0 left-0 right-0 z-30 shadow-inner">
+        <p class="text-[10px] font-bold text-rose-700">📌 T&C: రిటర్న్ లేదు. ఎక్స్చేంజ్ చేయబడును (Rs. 80/- ఛార్జ్ చేయబడుతుంది).</p>
+    </footer>
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyBPOp8NtMBP09rNtCGe5-wRre6Y_Zt5g0M",
-            authDomain: "venkat-textiles.firebaseapp.com",
-            projectId: "venkat-textiles",
-            storageBucket: "venkat-textiles.firebasestorage.app",
-            messagingSenderId: "636994469508",
-            appId: "1:636994469508:web:3635e16ec5a6c117ca5b05"
-        };
+    <!-- Image Zoom Modal -->
+    <div id="imageZoomModal" class="fixed inset-0 bg-black bg-opacity-80 hidden z-50 flex items-center justify-center p-3" onclick="closeImageZoom()">
+        <div class="relative max-w-sm w-full bg-white p-2 rounded-2xl shadow-2xl text-center" onclick="event.stopPropagation()">
+            <button onclick="closeImageZoom()" class="absolute top-2 right-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold w-7 h-7 rounded-full flex items-center justify-center text-xs">✕</button>
+            <img id="zoomedImg" src="" alt="Zoomed Product" class="w-full h-80 object-contain rounded-xl bg-gray-50 mb-2">
+            <p id="zoomedTitle" class="text-xs font-bold text-gray-800 truncate"></p>
+        </div>
+    </div>
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+    <!-- Cart Modal Drawer -->
+    <div id="cartModal" class="fixed inset-0 bg-black bg-opacity-60 hidden z-50 flex justify-end">
+        <div class="bg-white w-full max-w-xs h-full flex flex-col p-4 shadow-2xl relative">
+            <div class="flex justify-between items-center border-b pb-2 mb-3">
+                <h3 class="text-sm font-black text-gray-800">🛍️ మీ షాపింగ్ కార్ట్</h3>
+                <button onclick="toggleCart()" class="text-gray-500 font-bold text-base">✕</button>
+            </div>
 
-        async function loadProducts() {
-            const grid = document.getElementById('products-grid');
-            try {
-                const q = query(collection(db, "products"), orderBy("timestamp", "desc"));
-                const querySnapshot = await getDocs(q);
-                grid.innerHTML = '';
+            <div id="cart-items" class="flex-grow overflow-y-auto space-y-2 pr-1"></div>
 
-                if (querySnapshot.empty) {
-                    grid.innerHTML = `<p class="text-gray-500 col-span-full text-center py-10">ప్రస్తుతం ఎటువంటి ప్రొడక్ట్స్ అందుబాటులో లేవు.</p>`;
-                    return;
-                }
+            <div class="border-t pt-3 mt-2 bg-white">
+                <div class="flex justify-between items-center mb-3">
+                    <span class="text-xs text-gray-500 font-semibold">మొత్తం (Total):</span>
+                    <span id="cart-total" class="text-lg font-black text-rose-600">₹0</span>
+                </div>
+                <button onclick="openCheckoutModal()" class="w-full bg-rose-600 hover:bg-rose-700 text-white py-2.5 rounded-xl font-bold text-xs shadow-lg transition">
+                    Proceed to Checkout
+                </button>
+            </div>
+        </div>
+    </div>
 
-                querySnapshot.forEach((docItem) => {
-                    const p = docItem.data();
-                    const docId = docItem.id;
+    <!-- Shiprocket Customer Details & Address Modal -->
+    <div id="checkoutModal" class="fixed inset-0 bg-black bg-opacity-60 hidden z-50 flex items-center justify-center p-3">
+        <div class="bg-white w-full max-w-sm rounded-2xl p-4 shadow-2xl relative">
+            <div class="flex justify-between items-center mb-1">
+                <h3 class="text-sm font-bold text-gray-900">📦 డెలివెరీ అడ్రస్</h3>
+            </div>
+            <p class="text-[10px] text-emerald-600 font-bold mb-2">ఆర్డర్ ఐడీ: <span id="displayOrderId" class="bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">VT-XXXXX</span></p>
+            
+            <div class="space-y-2">
+                <div>
+                    <label class="text-[10px] font-semibold text-gray-600 block">పూర్తి పేరు:</label>
+                    <input type="text" id="custName" placeholder="ఉదా: వెంకట్" class="w-full border px-2.5 py-1.5 text-xs rounded-lg outline-none bg-gray-50">
+                </div>
+                <div>
+                    <label class="text-[10px] font-semibold text-gray-600 block">ఫోన్ నంబర్:</label>
+                    <input type="tel" id="custPhone" maxlength="10" placeholder="9441447923" class="w-full border px-2.5 py-1.5 text-xs rounded-lg outline-none bg-gray-50">
+                </div>
+                <div>
+                    <label class="text-[10px] font-semibold text-gray-600 block">పూర్తి అడ్రస్:</label>
+                    <textarea id="custAddress" rows="2" placeholder="ఇంటి నంబర్, వీధి, ఊరు" class="w-full border px-2.5 py-1.5 text-xs rounded-lg outline-none bg-gray-50"></textarea>
+                </div>
+                <div>
+                    <label class="text-[10px] font-semibold text-gray-600 block">పిన్‌కోడ్ (6 digits):</label>
+                    <input type="tel" id="custPincode" maxlength="6" placeholder="500001" class="w-full border px-2.5 py-1.5 text-xs rounded-lg outline-none bg-gray-50">
+                </div>
+            </div>
 
-                    grid.innerHTML += `
-                        <div class="bg-white rounded-lg shadow overflow-hidden flex flex-col justify-between">
-                            <img class="h-48 w-full object-cover" src="${p.image}" alt="${p.name}">
-                            <div class="p-3">
-                                <h3 class="font-bold text-gray-900 text-sm md:text-base">${p.name}</h3>
-                                <p class="text-gray-500 text-xs my-1">${p.description || ''}</p>
-                                <div class="flex justify-between items-center mt-3">
-                                    <span class="text-lg font-bold text-green-600">₹${p.price}</span>
-                                    <button onclick="sendOrder('${p.name.replace(/'/g, "\\'")}', '${p.price}')" class="bg-green-500 text-white text-xs px-2 py-1.5 rounded font-bold hover:bg-green-600">
-                                        WhatsApp ఆర్డర్
-                                    </button>
-                                </div>
-                                <button onclick="deleteProduct('${docId}')" class="w-full mt-2 bg-red-500 text-white text-xs py-1 rounded font-bold hover:bg-red-600">
-                                    🗑️ ఈ ప్రొడక్ట్ తొలగించు (Delete)
-                                </button>
-                            </div>
-                        </div>
-                    `;
-                });
-            } catch (e) {
-                grid.innerHTML = `<p class="text-red-500 col-span-full text-center">డేటా లోడ్ అవ్వలేదు: ${e.message}</p>`;
-            }
-        }
+            <button onclick="proceedToPaymentQR()" class="w-full bg-rose-600 hover:bg-rose-700 text-white text-xs py-2.5 rounded-xl font-bold shadow mt-3 transition">
+                📷 QR కోడ్ స్కాన్ చేసి పే చేయి (Next)
+            </button>
+            <button onclick="closeCheckoutModal()" class="w-full text-gray-500 text-[10px] py-1 font-semibold mt-1">మూసివేయి</button>
+        </div>
+    </div>
 
-        window.sendOrder = function(name, price) {
-            const myNumber = "919441447923";
-            const text = `హలో Venkat Textiles, నేను మీ సైట్‌లో ఈ ప్రొడక్ట్ చూశాను:\n\nSaree: *${name}*\nPrice: *₹${price}*\n\nఆర్డర్ కన్ఫర్మ్ చేయగలరు.`;
-            window.open(`https://wa.me/${myNumber}?text=${encodeURIComponent(text)}`, '_blank');
-        }
+    <!-- QR Code Scan & Pay Modal -->
+    <div id="qrModal" class="fixed inset-0 bg-black bg-opacity-70 hidden z-50 flex items-center justify-center p-3">
+        <div class="bg-white w-full max-w-sm rounded-2xl p-4 text-center shadow-2xl relative">
+            <h3 class="text-sm font-bold text-gray-900 mb-0.5">Scan & Pay via QR Code</h3>
+            <p class="text-[11px] font-bold text-rose-600 mb-0.5">Venkat Textiles</p>
+            <p class="text-[10px] text-gray-500 mb-2">UPI ID: 8121911438@okbizaxis</p>
+            
+            <div class="bg-gray-50 p-3 rounded-xl border border-gray-200 mb-3">
+                <div class="flex justify-between items-center px-1 mb-1">
+                    <span class="text-[10px] text-gray-500 font-semibold">చెల్లించవలసిన మొత్తం:</span>
+                    <span id="qrAmountText" class="text-sm font-black text-rose-600">₹0</span>
+                </div>
+                <div class="bg-white p-2 border inline-block rounded-lg shadow-sm">
+                    <img id="dynamicQrImage" src="" alt="Merchant QR Code" class="w-32 h-32 mx-auto object-contain">
+                </div>
+                <p class="text-[9px] text-gray-500 mt-1">ఫోన్‌పే/గూగుల్ పే తో క్యూఆర్ స్కాన్ చేసి పే చేయండి.</p>
+                <div class="mt-2 text-left">
+                    <label class="text-[10px] font-bold text-gray-700 block mb-1">పేమెంట్ UTR / Transaction ID:</label>
+                    <input type="text" id="utrNumber" placeholder="ఉదా: 4235xxxxxxxx" class="w-full border px-2 py-1.5 text-xs rounded-lg outline-none bg-white">
+                </div>
+            </div>
 
-        window.deleteProduct = async function(id) {
-            if (confirm("మీరు నిజంగా ఈ ప్రొడక్ట్‌ని తొలగించాలనుకుంటున్నారా?")) {
-                try {
-                    await deleteDoc(doc(db, "products", id));
-                    alert("ప్రొడక్ట్ విజయవంతంగా తొలగించబడింది!");
-                    loadProducts();
-                } catch (error) {
-                    alert("తొలగించడంలో ఎర్రర్ వచ్చింది: " + error.message);
-                }
-            }
-        }
+            <button onclick="finishOrderWhatsApp()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs py-2.5 rounded-xl font-bold shadow mb-2 flex items-center justify-center gap-1">
+                ✅ ఆర్డర్ కన్ఫర్మ్ చేసి వాట్సాప్‌కి పంపు
+            </button>
+            <button onclick="closeQRModal()" class="w-full text-gray-400 text-[10px] py-1 font-semibold">క్యాన్సల్</button>
+        </div>
+    </div>
 
-        loadProducts();
-    </script>
+    <!-- My Orders Modal -->
+    <div id="myOrdersModal" class="fixed inset-0 bg-black bg-opacity-70 hidden z-50 flex items-center justify-center p-3">
+        <div class="bg-white w-full max-w-md rounded-2xl p-4 shadow-2xl relative max-h-[85vh] flex flex-col">
+            <div class="flex justify-between items-center border-b pb-2 mb-3">
+                <h3 class="text-sm font-black text-gray-900">📦 నా ఆర్డర్లు (My Orders)</h3>
+                <button onclick="closeMyOrdersModal()" class="text-gray-500 font-bold text-base">✕</button>
+            </div>
+            
+            <div class="mb-3">
+                <label class="text-[10px] font-semibold text-gray-600 block mb-1">మీ ఫోన్ నంబర్ ఎంటర్ చేయండి:</label>
+                <div class="flex gap-2">
+                    <input type="tel" id="searchPhone" maxlength="10" placeholder="10 అంకెల ఫోన్ నంబర్" class="w-full border px-2.5 py-1.5 text-xs rounded-lg outline-none bg-gray-50">
+                    <button onclick="fetchCustomerOrders()" class="bg-rose-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow">వెతుకు</button>
+                </div>
+            </div>
+
+            <div id="ordersListContainer" class="flex-grow overflow-y-auto space-y-3 pr-1">
+                <p class="text-gray-400 text-center text-xs py-6">మీ ఫోన్ నంబర్ ఎంటర్ చేసి మీ ఆర్డర్లు చూడండి.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-12 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-[11px] px-3.5 py-2 rounded-full shadow-2xl transition-all duration-300 translate-y-20 opacity-0 z-50">
+        జోడించబడింది
+    </div>
+
 </body>
 </html>
+
